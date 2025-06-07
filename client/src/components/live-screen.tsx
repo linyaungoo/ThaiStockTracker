@@ -1,39 +1,32 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function LiveScreen() {
-  const { data: liveData } = useQuery({
-    queryKey: ["/api/lottery/live"],
-    queryFn: async () => {
-      const response = await fetch("/api/lottery/live");
-      return response.json();
-    },
-    refetchInterval: 30000,
-  });
+  const [liveData, setLiveData] = useState<any>(null);
+  const [resultsData, setResultsData] = useState<any>(null);
 
-  const { data: resultsData } = useQuery({
-    queryKey: ["/api/lottery/results"],
-    queryFn: async () => {
-      const response = await fetch("/api/lottery/results");
-      return response.json();
-    },
-    refetchInterval: 30000,
-  });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [liveRes, resultsRes] = await Promise.all([
+          fetch("/api/lottery/live"),
+          fetch("/api/lottery/results")
+        ]);
+        
+        const live = await liveRes.json();
+        const results = await resultsRes.json();
+        
+        setLiveData(live);
+        setResultsData(results);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      }
+    };
 
-  const getChangeIcon = (change: number) => {
-    if (change > 0) return <ArrowUp className="h-3 w-3 text-green-500" />;
-    if (change < 0) return <ArrowDown className="h-3 w-3 text-red-500" />;
-    return <Minus className="h-3 w-3 text-gray-400" />;
-  };
-
-  const getTimeColor = (time: string) => {
-    if (!time) return "bg-purple-500";
-    if (time.includes("11:00")) return "bg-blue-500";
-    if (time.includes("12:01")) return "bg-yellow-500";
-    if (time.includes("15:00")) return "bg-orange-500";
-    return "bg-purple-500";
-  };
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const liveResult = liveData?.live;
   const todayResults = resultsData?.result || [];
@@ -71,7 +64,8 @@ export default function LiveScreen() {
             const displayTimes = ["11:00 AM", "12:01 PM", "3:00 PM", "4:30 PM"];
             const currentTime = displayTimes[index];
             const currentLabel = drawLabels[index];
-            const timeColor = getTimeColor(drawTimes[index]);
+            const timeColors = ["bg-blue-500", "bg-yellow-500", "bg-orange-500", "bg-purple-500"];
+            const timeColor = timeColors[index];
             const result = todayResults[index];
             
             return (
@@ -97,11 +91,8 @@ export default function LiveScreen() {
                           <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">
                             {result.twod || "--"}
                           </div>
-                          <div className="flex items-center justify-end space-x-1">
-                            {getChangeIcon(0)}
-                            <span className="text-xs text-gray-500">
-                              {result.set || ""}
-                            </span>
+                          <div className="text-xs text-gray-500">
+                            Set: {result.set || ""}
                           </div>
                         </>
                       ) : (

@@ -1,15 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useLotteryData } from "@/hooks/use-lottery-data";
 import { Search } from "lucide-react";
 
 export default function SearchScreen() {
   const [searchNumber, setSearchNumber] = useState("");
   const [searchResults, setSearchResults] = useState<any>(null);
-  const { numberStats, popularNumbers } = useLotteryData();
+  const [popularNumbers, setPopularNumbers] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchPopularNumbers = async () => {
+      try {
+        const response = await fetch("/api/lottery/popular-numbers");
+        const data = await response.json();
+        setPopularNumbers(data);
+      } catch (error) {
+        console.error("Failed to fetch popular numbers:", error);
+      }
+    };
+
+    fetchPopularNumbers();
+  }, []);
 
   const handleSearch = async (number: string) => {
     if (number.length === 2) {

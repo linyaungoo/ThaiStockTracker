@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useLotteryData } from "@/hooks/use-lottery-data";
 import { ChevronDown, Download } from "lucide-react";
-import LotteryChart from "./lottery-chart";
 
 interface DateSection {
   date: string;
@@ -12,25 +10,37 @@ interface DateSection {
 }
 
 export default function HistoryScreen() {
-  const { recentHistory } = useLotteryData();
+  const [recentHistory, setRecentHistory] = useState<any[]>([]);
   const [dateSections, setDateSections] = useState<DateSection[]>([]);
 
-  // Initialize date sections from recent history
+  // Fetch recent history
   useEffect(() => {
-    if (recentHistory) {
-      const sections = recentHistory.map((history: any) => ({
-        date: history.date,
-        results: Array.isArray(history.results) 
-          ? history.results.map((result: any, index: number) => ({
-              time: ["11:00 AM", "12:01 PM", "3:00 PM", "4:30 PM"][index] || "Unknown",
-              twod: result.twod || result.set?.slice(-2) || "--"
-            }))
-          : [],
-        isExpanded: false
-      }));
-      setDateSections(sections);
-    }
-  }, [recentHistory]);
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch("/api/lottery/recent-history/10");
+        const data = await response.json();
+        setRecentHistory(data);
+        
+        if (data && Array.isArray(data)) {
+          const sections = data.map((history: any) => ({
+            date: history.date,
+            results: Array.isArray(history.results) 
+              ? history.results.map((result: any, index: number) => ({
+                  time: ["11:00 AM", "12:01 PM", "3:00 PM", "4:30 PM"][index] || "Unknown",
+                  twod: result.twod || result.set?.slice(-2) || "--"
+                }))
+              : [],
+            isExpanded: false
+          }));
+          setDateSections(sections);
+        }
+      } catch (error) {
+        console.error("Failed to fetch history:", error);
+      }
+    };
+
+    fetchHistory();
+  }, []);
 
   const toggleDateSection = (index: number) => {
     setDateSections(prev => prev.map((section, i) => 
@@ -76,7 +86,9 @@ export default function HistoryScreen() {
       <Card className="border border-gray-100 dark:border-gray-700">
         <CardContent className="p-4">
           <h3 className="font-medium text-gray-800 dark:text-gray-200 mb-3">7-Day Trend</h3>
-          <LotteryChart data={recentHistory || []} />
+          <div className="h-32 bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900 dark:to-blue-800 rounded-lg flex items-center justify-center">
+            <span className="text-gray-600 dark:text-gray-300">Chart visualization coming soon</span>
+          </div>
         </CardContent>
       </Card>
 

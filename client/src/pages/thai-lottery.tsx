@@ -1,22 +1,17 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { useLotteryData } from "@/hooks/use-lottery-data";
-import LiveScreen from "@/components/live-screen";
-import HistoryScreen from "@/components/history-screen";
-import SearchScreen from "@/components/search-screen";
+import SimpleLiveScreen from "@/components/simple-live-screen";
 import BottomNavigation from "@/components/bottom-navigation";
-import { ErrorBoundary } from "@/components/error-boundary";
-import { Wifi, WifiOff, Moon, Sun } from "lucide-react";
+import { Moon, Sun, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type Screen = "live" | "history" | "search";
 
 export default function ThaiLotteryApp() {
   const [activeScreen, setActiveScreen] = useState<Screen>("live");
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  
-  const { isLoading } = useLotteryData();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Monitor online status
   useEffect(() => {
