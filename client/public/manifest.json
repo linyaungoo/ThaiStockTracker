@@ -1,0 +1,33 @@
+{
+  "name": "Thai2Dapp - Thai Lottery Results",
+  "short_name": "Thai2Dapp",
+  "description": "Progressive Web App for Thai lottery results with live updates and historical data",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#1976D2",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231976D2'/%3E%3Ctext x='50' y='60' font-family='Arial' font-size='50' font-weight='bold' text-anchor='middle' fill='white'%3E2D%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231976D2'/%3E%3Ctext x='50' y='60' font-family='Arial' font-size='50' font-weight='bold' text-anchor='middle' fill='white'%3E2D%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["entertainment", "utilities"],
+  "lang": "en",
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='600'%3E%3Crect width='300' height='600' fill='%23f8fafc'/%3E%3Crect width='300' height='80' fill='%231976D2'/%3E%3Ctext x='20' y='50' font-family='Arial' font-size='20' font-weight='bold' fill='white'%3EThai2Dapp%3C/text%3E%3C/svg%3E",
+      "sizes": "300x600",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}
