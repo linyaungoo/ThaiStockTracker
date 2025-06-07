@@ -11,9 +11,11 @@ export function useLotteryData() {
     queryKey: ["/api/lottery/live"],
     queryFn: async () => {
       try {
-        const data = await lotteryApi.getLiveResults();
-        localCache.set(CACHE_KEYS.LIVE_RESULTS, data);
-        return data;
+        const response = await fetch("/api/lottery/live");
+        const data = await response.json();
+        const liveData = data.live || data;
+        localCache.set(CACHE_KEYS.LIVE_RESULTS, liveData);
+        return liveData;
       } catch (error) {
         // Try to use cached data if API fails
         const cached = localCache.get(CACHE_KEYS.LIVE_RESULTS);
@@ -30,9 +32,11 @@ export function useLotteryData() {
     queryKey: ["/api/lottery/results"],
     queryFn: async () => {
       try {
-        const data = await lotteryApi.getTodayResults();
-        localCache.set(CACHE_KEYS.TODAY_RESULTS, data);
-        return data;
+        const response = await fetch("/api/lottery/results");
+        const data = await response.json();
+        const results = data.result || data;
+        localCache.set(CACHE_KEYS.TODAY_RESULTS, results);
+        return results;
       } catch (error) {
         const cached = localCache.get(CACHE_KEYS.TODAY_RESULTS);
         if (cached) return cached;

@@ -46,7 +46,7 @@ export default function LiveScreen() {
         </h3>
         
         <div className="space-y-3">
-          {Array.from({ length: 4 }, (_, index) => {
+          {Array.from({ length: 4 }, (_, index: number) => {
             const drawTimes = ["11:00 AM", "12:01 PM", "3:00 PM", "4:30 PM"];
             const drawLabels = ["Morning Draw", "Noon Draw", "Afternoon Draw", "Evening Draw"];
             const currentTime = drawTimes[index];
@@ -75,7 +75,7 @@ export default function LiveScreen() {
                       {result ? (
                         <>
                           <div className="text-2xl font-bold number-display text-gray-800 dark:text-gray-200">
-                            {result.twod}
+                            {result.twod || "--"}
                           </div>
                           <div className="flex items-center justify-end space-x-1">
                             {getChangeIcon(Math.random() * 10 - 5)}

@@ -5,6 +5,7 @@ import LiveScreen from "@/components/live-screen";
 import HistoryScreen from "@/components/history-screen";
 import SearchScreen from "@/components/search-screen";
 import BottomNavigation from "@/components/bottom-navigation";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Wifi, WifiOff, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -95,9 +96,11 @@ export default function ThaiLotteryApp() {
 
       {/* Screen Content */}
       <div className="pb-20">
-        {activeScreen === "live" && <LiveScreen />}
-        {activeScreen === "history" && <HistoryScreen />}
-        {activeScreen === "search" && <SearchScreen />}
+        <ErrorBoundary>
+          {activeScreen === "live" && <LiveScreen />}
+          {activeScreen === "history" && <HistoryScreen />}
+          {activeScreen === "search" && <SearchScreen />}
+        </ErrorBoundary>
       </div>
 
       {/* Bottom Navigation */}

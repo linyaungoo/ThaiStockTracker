@@ -54,11 +54,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = await response.json();
       
       // Store results and update number stats
-      if (Array.isArray(data)) {
-        for (const result of data) {
+      const results = data.result || data;
+      if (Array.isArray(results)) {
+        for (const result of results) {
           if (result.set && result.value && result.twod) {
             await storage.createLotteryResult({
-              date: new Date().toISOString().split('T')[0],
+              date: result.stock_date || new Date().toISOString().split('T')[0],
               time: result.open_time || new Date().toISOString(),
               set: result.set,
               value: result.value,
@@ -93,12 +94,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = new Date().toISOString().split('T')[0];
       const cachedResults = await storage.getLotteryResultsByDate(today);
       if (cachedResults.length > 0) {
-        res.json(cachedResults.map(result => ({
-          set: result.set,
-          value: result.value,
-          open_time: result.openTime,
-          twod: result.twod
-        })));
+        res.json({ 
+          result: cachedResults.map(result => ({
+            set: result.set,
+            value: result.value,
+            open_time: result.openTime,
+            twod: result.twod
+          }))
+        });
       } else {
         res.status(500).json({ error: "Failed to fetch results and no cached data available" });
       }
