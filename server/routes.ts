@@ -1,45 +1,95 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { setupVite, serveStatic } from "./vite";
 import { storage } from "./storage";
 import { insertLotteryResultSchema, insertLotteryHistorySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Thai Lottery API proxy endpoints
   
-  // Get live results
+  // Get live results and today's results combined
   app.get("/api/lottery/live", async (req, res) => {
     try {
-      const response = await fetch("https://api.thaistock2d.com/live");
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+      // Fetch from the actual Thai lottery API endpoints
+      const [liveResponse, resultResponse] = await Promise.all([
+        fetch("https://thaistock2d.com/live", {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json, text/plain, */*',
+          }
+        }),
+        fetch("https://thaistock2d.com/result", {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json, text/plain, */*',
+          }
+        })
+      ]);
+
+      let liveData = null;
+      let resultData = [];
+
+      // Process live data
+      if (liveResponse.ok) {
+        liveData = await liveResponse.json();
       }
-      const data = await response.json();
-      
-      // Store in local storage for caching
-      if (data.set && data.value && data.twod) {
-        await storage.createLotteryResult({
-          date: new Date().toISOString().split('T')[0],
-          time: data.time || new Date().toISOString(),
-          set: data.set,
-          value: data.value,
-          twod: data.twod,
-          openTime: data.time || new Date().toISOString(),
-        });
+
+      // Process today's results
+      if (resultResponse.ok) {
+        const results = await resultResponse.json();
+        resultData = Array.isArray(results) ? results : (results.result || []);
       }
-      
-      res.json(data);
+
+      // Store live result if available
+      if (liveData && liveData.set && liveData.value && liveData.twod) {
+        try {
+          await storage.createLotteryResult({
+            date: new Date().toISOString().split('T')[0],
+            time: liveData.time || new Date().toISOString(),
+            set: liveData.set,
+            value: liveData.value,
+            twod: liveData.twod,
+            openTime: liveData.time || new Date().toISOString(),
+          });
+        } catch (storageError) {
+          console.error("Storage error:", storageError);
+        }
+      }
+
+      res.json({
+        live: liveData,
+        result: resultData
+      });
+
     } catch (error) {
-      // Return cached data if API fails
-      const latest = await storage.getLatestLotteryResult();
-      if (latest) {
+      console.error("API Error:", error);
+      
+      // Try to get cached data
+      try {
+        const latest = await storage.getLatestLotteryResult();
+        const today = new Date().toISOString().split('T')[0];
+        const cachedResults = await storage.getLotteryResultsByDate(today);
+        
         res.json({
-          set: latest.set,
-          value: latest.value,
-          time: latest.time,
-          twod: latest.twod
+          live: latest ? {
+            set: latest.set,
+            value: latest.value,
+            time: latest.time,
+            twod: latest.twod
+          } : null,
+          result: cachedResults.map(result => ({
+            set: result.set,
+            value: result.value,
+            open_time: result.openTime,
+            twod: result.twod
+          })),
+          cached: true
         });
-      } else {
-        res.status(500).json({ error: "Failed to fetch live results and no cached data available" });
+      } catch (cacheError) {
+        res.status(500).json({ 
+          error: "Failed to fetch lottery data",
+          message: "Unable to connect to lottery service"
+        });
       }
     }
   });
@@ -188,6 +238,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
+  const server = createServer(app);
+
+  if (app.get("env") === "development") {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
+  }
+
+  return server;
 }
