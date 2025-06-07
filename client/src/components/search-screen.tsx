@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ export default function SearchScreen() {
     }
   };
 
-  const searchNumber = (number: string) => {
+  const performSearch = (number: string) => {
     setSearchNumber(number);
     handleSearch(number);
   };
@@ -172,12 +172,12 @@ export default function SearchScreen() {
             <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-3">Most Popular Numbers</h4>
             <div className="grid grid-cols-4 gap-2">
               {popularNumbers && popularNumbers.length > 0 ? (
-                popularNumbers.slice(0, 8).map((numberStat, index) => (
+                popularNumbers.slice(0, 8).map((numberStat: any, index: number) => (
                   <Button
                     key={index}
                     variant="outline"
                     className="p-3 text-center bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-thai-blue hover:text-white transition-colors h-auto flex-col"
-                    onClick={() => searchNumber(numberStat.number)}
+                    onClick={() => performSearch(numberStat.number)}
                   >
                     <div className="font-bold">{numberStat.number}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -192,7 +192,7 @@ export default function SearchScreen() {
                     key={index}
                     variant="outline"
                     className="p-3 text-center bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-thai-blue hover:text-white transition-colors h-auto flex-col"
-                    onClick={() => searchNumber(number)}
+                    onClick={() => performSearch(number)}
                   >
                     <div className="font-bold">{number}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">

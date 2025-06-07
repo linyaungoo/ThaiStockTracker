@@ -12,6 +12,7 @@ export default function LiveScreen() {
   };
 
   const getTimeColor = (time: string) => {
+    if (!time) return "bg-purple-500";
     if (time.includes("11:00")) return "bg-thai-blue";
     if (time.includes("12:01")) return "bg-thai-gold";
     if (time.includes("3:00")) return "bg-orange-500";
@@ -45,10 +46,13 @@ export default function LiveScreen() {
         </h3>
         
         <div className="space-y-3">
-          {todayResults?.map((result, index) => {
+          {Array.from({ length: 4 }, (_, index) => {
             const drawTimes = ["11:00 AM", "12:01 PM", "3:00 PM", "4:30 PM"];
             const drawLabels = ["Morning Draw", "Noon Draw", "Afternoon Draw", "Evening Draw"];
-            const timeColor = getTimeColor(drawTimes[index]);
+            const currentTime = drawTimes[index];
+            const currentLabel = drawLabels[index];
+            const timeColor = getTimeColor(currentTime);
+            const result = todayResults?.[index];
             
             return (
               <Card key={index} className="border border-gray-100 dark:border-gray-700">
@@ -56,14 +60,14 @@ export default function LiveScreen() {
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-3">
                       <div className={`w-12 h-12 ${timeColor} rounded-full flex items-center justify-center text-white font-bold`}>
-                        {drawTimes[index].split(':')[0]}
+                        {currentTime?.split(':')[0] || "--"}
                       </div>
                       <div>
                         <div className="font-semibold text-gray-800 dark:text-gray-200">
-                          {drawTimes[index]}
+                          {currentTime}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {drawLabels[index]}
+                          {currentLabel}
                         </div>
                       </div>
                     </div>

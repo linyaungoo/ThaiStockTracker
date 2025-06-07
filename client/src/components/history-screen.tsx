@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLotteryData } from "@/hooks/use-lottery-data";
@@ -16,9 +16,9 @@ export default function HistoryScreen() {
   const [dateSections, setDateSections] = useState<DateSection[]>([]);
 
   // Initialize date sections from recent history
-  React.useEffect(() => {
+  useEffect(() => {
     if (recentHistory) {
-      const sections = recentHistory.map(history => ({
+      const sections = recentHistory.map((history: any) => ({
         date: history.date,
         results: Array.isArray(history.results) 
           ? history.results.map((result: any, index: number) => ({
