@@ -10,78 +10,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get live results and today's results combined
   app.get("/api/lottery/live", async (req, res) => {
     try {
-      // Fetch from the actual Thai lottery API endpoints
-      const [liveResponse, resultResponse] = await Promise.all([
-        fetch("https://thaistock2d.com/live", {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json, text/plain, */*',
-          }
-        }),
-        fetch("https://thaistock2d.com/result", {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json, text/plain, */*',
-          }
-        })
-      ]);
+      const response = await fetch("https://api.thaistock2d.com/live", {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
 
-      let liveData = null;
-      let resultData = [];
-
-      // Process live data
-      if (liveResponse.ok) {
-        liveData = await liveResponse.json();
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
       }
 
-      // Process today's results
-      if (resultResponse.ok) {
-        const results = await resultResponse.json();
-        resultData = Array.isArray(results) ? results : (results.result || []);
-      }
+      const data = await response.json();
 
       // Store live result if available
-      if (liveData && liveData.set && liveData.value && liveData.twod) {
+      if (data.live && data.live.set !== "--" && data.live.value !== "--" && data.live.twod !== "--") {
         try {
           await storage.createLotteryResult({
-            date: new Date().toISOString().split('T')[0],
-            time: liveData.time || new Date().toISOString(),
-            set: liveData.set,
-            value: liveData.value,
-            twod: liveData.twod,
-            openTime: liveData.time || new Date().toISOString(),
+            date: data.live.date || new Date().toISOString().split('T')[0],
+            time: data.live.time || new Date().toISOString(),
+            set: data.live.set,
+            value: data.live.value,
+            twod: data.live.twod,
+            openTime: data.live.time || new Date().toISOString(),
           });
         } catch (storageError) {
           console.error("Storage error:", storageError);
         }
       }
 
-      res.json({
-        live: liveData,
-        result: resultData
-      });
+      // Store today's results and update number statistics
+      if (data.result && Array.isArray(data.result)) {
+        for (const result of data.result) {
+          try {
+            await storage.createLotteryResult({
+              date: result.stock_date || new Date().toISOString().split('T')[0],
+              time: result.stock_datetime || new Date().toISOString(),
+              set: result.set,
+              value: result.value,
+              twod: result.twod,
+              openTime: result.open_time || new Date().toISOString(),
+            });
+
+            // Update number statistics
+            const existingStats = await storage.getNumberStats(result.twod);
+            if (existingStats) {
+              await storage.updateNumberStats({
+                number: result.twod,
+                occurrences: (existingStats.occurrences || 0) + 1,
+                lastSeen: new Date(),
+                frequency: `${((existingStats.occurrences || 0) + 1) * 0.85}%`
+              });
+            } else {
+              await storage.updateNumberStats({
+                number: result.twod,
+                occurrences: 1,
+                lastSeen: new Date(),
+                frequency: "0.85%"
+              });
+            }
+          } catch (storageError) {
+            console.error("Storage error for result:", storageError);
+          }
+        }
+      }
+
+      res.json(data);
 
     } catch (error) {
       console.error("API Error:", error);
       
-      // Try to get cached data
+      // Try to get cached data as fallback
       try {
         const latest = await storage.getLatestLotteryResult();
         const today = new Date().toISOString().split('T')[0];
         const cachedResults = await storage.getLotteryResultsByDate(today);
         
         res.json({
+          server_time: new Date().toISOString(),
           live: latest ? {
             set: latest.set,
             value: latest.value,
             time: latest.time,
-            twod: latest.twod
-          } : null,
+            twod: latest.twod,
+            date: latest.date
+          } : { set: "--", value: "--", time: "--", twod: "--", date: today },
           result: cachedResults.map(result => ({
             set: result.set,
             value: result.value,
             open_time: result.openTime,
-            twod: result.twod
+            twod: result.twod,
+            stock_date: result.date,
+            stock_datetime: result.time
           })),
           cached: true
         });

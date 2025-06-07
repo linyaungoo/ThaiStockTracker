@@ -28,25 +28,122 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root">
+      <!-- Fallback HTML content -->
+      <div style="max-width: 480px; margin: 0 auto; background: #ffffff; min-height: 100vh; font-family: Arial, sans-serif;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 20px; text-align: center;">
+          <h1 style="margin: 0 0 8px 0; font-size: 24px;">Thai2Dapp</h1>
+          <p style="margin: 0; opacity: 0.9;">Live Thai Lottery Results</p>
+        </div>
+        
+        <!-- Live Results Card -->
+        <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; margin: 16px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="margin: 0;">Live Result</h2>
+            <button onclick="fetchLotteryData()" style="padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 6px; cursor: pointer;">
+              ↻ Refresh
+            </button>
+          </div>
+          
+          <div id="live-results" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <p style="margin: 0 0 4px 0; opacity: 0.8; font-size: 14px;">Set</p>
+              <p id="live-set" style="margin: 0; font-size: 20px; font-weight: bold;">Loading...</p>
+            </div>
+            <div>
+              <p style="margin: 0 0 4px 0; opacity: 0.8; font-size: 14px;">Value</p>
+              <p id="live-value" style="margin: 0; font-size: 20px; font-weight: bold;">Loading...</p>
+            </div>
+            <div>
+              <p style="margin: 0 0 4px 0; opacity: 0.8; font-size: 14px;">2D Number</p>
+              <p id="live-twod" style="margin: 0; font-size: 28px; font-weight: bold; color: #fbbf24;">--</p>
+            </div>
+            <div>
+              <p style="margin: 0 0 4px 0; opacity: 0.8; font-size: 14px;">Time</p>
+              <p id="live-time" style="margin: 0; font-size: 16px;">--</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Today's Results -->
+        <div style="background: #f8fafc; margin: 16px; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <h3 style="margin: 0 0 16px 0; font-size: 18px;">Today's Results</h3>
+          <div id="today-results">
+            <p style="text-align: center; color: #6b7280;">Loading today's results...</p>
+          </div>
+        </div>
+        
+        <!-- Status -->
+        <div style="text-align: center; padding: 16px;">
+          <p id="status" style="font-size: 12px; color: #6b7280;">Connecting to lottery service...</p>
+        </div>
+      </div>
+    </div>
     
-    <!-- Service Worker Registration -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
-        });
+      let lastUpdateTime = null;
+      
+      function updateStatus(message) {
+        document.getElementById('status').textContent = message;
       }
+      
+      function formatTime(timeString) {
+        if (!timeString || timeString === '--') return '--';
+        return timeString.split('T')[1]?.split('.')[0] || timeString;
+      }
+      
+      async function fetchLotteryData() {
+        updateStatus('Fetching latest lottery data...');
+        try {
+          const response = await fetch('/api/lottery/live');
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          
+          // Update live results
+          if (data.live) {
+            document.getElementById('live-set').textContent = data.live.set || '--';
+            document.getElementById('live-value').textContent = data.live.value || '--';
+            document.getElementById('live-twod').textContent = data.live.twod || '--';
+            document.getElementById('live-time').textContent = formatTime(data.live.time);
+          }
+          
+          // Update today's results
+          if (data.result && Array.isArray(data.result)) {
+            const resultsHtml = data.result.map(result => `
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; margin-bottom: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div>
+                  <div style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">${result.open_time}</div>
+                  <div style="font-size: 14px; color: #374151;">Set: ${result.set}</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 24px; font-weight: bold; color: #3b82f6;">${result.twod}</div>
+                  <div style="font-size: 12px; color: #6b7280;">Value: ${result.value}</div>
+                </div>
+              </div>
+            `).join('');
+            document.getElementById('today-results').innerHTML = resultsHtml;
+          }
+          
+          lastUpdateTime = new Date();
+          updateStatus(`Last updated: ${lastUpdateTime.toLocaleTimeString()}`);
+          
+        } catch (error) {
+          console.error('Failed to fetch lottery data:', error);
+          updateStatus('Failed to fetch data. Please try again.');
+        }
+      }
+      
+      // Initial fetch
+      fetchLotteryData();
+      
+      // Auto-refresh every 30 minutes
+      setInterval(fetchLotteryData, 30 * 60 * 1000);
     </script>
     
-    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
-    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
