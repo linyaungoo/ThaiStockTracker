@@ -20,19 +20,19 @@ Thai2Dapp is a Progressive Web App that displays live Thai lottery results with 
 ## API Integration
 - **Live Results**: `https://api.thaistock2d.com/live`
 - **Response Format**: JSON with live results and today's complete draws
-- **Update Frequency**: Auto-refresh every 30 minutes
+- **Update Frequency**: Auto-refresh every 30 minutes for optimal performance
 - **Fallback**: In-memory cache when API unavailable
 
 ## Recent Changes
+- **2025-06-24**: Adjusted auto-refresh interval to 30 minutes per user request
 - **2025-06-24**: Successfully reconnected live API integration for production
 - **2025-06-24**: Fixed React component structure to properly use React Query
-- **2025-06-24**: Restored complete app navigation with live data fetching
 - **2025-06-24**: Verified API connectivity returning authentic Thai lottery data
 
 ## User Preferences
 - Production-ready app with live API integration
 - Mobile-optimized interface with clean design  
-- Real-time lottery data with auto-refresh functionality
+- Auto-refresh every 30 minutes to reduce server load
 - Progressive Web App features for mobile installation
 
 ## Next Steps

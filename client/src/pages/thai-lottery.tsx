@@ -15,14 +15,14 @@ export default function ThaiLotteryApp() {
   const { data: liveData, isLoading: isLiveLoading, error: liveError } = useQuery({
     queryKey: ['/api/lottery/live'],
     queryFn: () => lotteryApi.getLiveResults(),
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30 * 60 * 1000, // Refresh every 30 minutes
   });
 
   // Fetch today's results
   const { data: todayResults, isLoading: isResultsLoading } = useQuery({
     queryKey: ['/api/lottery/results'],
     queryFn: () => lotteryApi.getTodayResults(),
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 30 * 60 * 1000, // Refresh every 30 minutes
   });
 
   const renderScreen = () => {
