@@ -47,12 +47,19 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
+  // Setup static serving and Vite based on environment
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  if (!isProduction) {
+    // Development: Use Vite dev server
+    try {
+      await setupVite(app, server);
+    } catch (viteError) {
+      console.error("Vite setup failed, falling back to static serving:", viteError);
+      serveStatic(app);
+    }
   } else {
+    // Production: Serve static files
     serveStatic(app);
   }
 
