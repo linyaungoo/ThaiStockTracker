@@ -1,152 +1,56 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Clock, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import LiveScreen from "../components/live-screen";
+import HistoryScreen from "../components/history-screen";
+import SearchScreen from "../components/search-screen";
+import BottomNavigation from "../components/bottom-navigation";
+import { lotteryApi } from "../lib/lottery-api";
 
 type Screen = "live" | "history" | "search";
 
-interface LiveResult {
-  set: string;
-  value: string;
-  time: string;
-  twod: string;
-}
-
-interface TodayResult {
-  set: string;
-  value: string;
-  open_time: string;
-  twod: string;
-}
-
 export default function ThaiLotteryApp() {
   const [activeScreen, setActiveScreen] = useState<Screen>("live");
-  const [liveResult, setLiveResult] = useState<LiveResult | null>(null);
-  const [todayResults, setTodayResults] = useState<TodayResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
-  const fetchLiveData = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/lottery/live");
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const data = await response.json();
-      
-      if (data.live) {
-        setLiveResult(data.live);
-      }
-      
-      if (data.result && Array.isArray(data.result)) {
-        setTodayResults(data.result);
-      }
-      
-      setLastUpdate(new Date());
-    } catch (error) {
-      console.error("Failed to fetch lottery data:", error);
-      // Keep existing data on error instead of clearing it
-    } finally {
-      setIsLoading(false);
+  // Fetch live lottery data from API
+  const { data: liveData, isLoading: isLiveLoading, error: liveError } = useQuery({
+    queryKey: ['/api/lottery/live'],
+    queryFn: () => lotteryApi.getLiveResults(),
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch today's results
+  const { data: todayResults, isLoading: isResultsLoading } = useQuery({
+    queryKey: ['/api/lottery/results'],
+    queryFn: () => lotteryApi.getTodayResults(),
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  const renderScreen = () => {
+    switch (activeScreen) {
+      case "live":
+        return (
+          <LiveScreen 
+            liveResult={liveData?.live} 
+            todayResults={todayResults?.result || liveData?.result} 
+            isLoading={isLiveLoading || isResultsLoading}
+            error={liveError}
+          />
+        );
+      case "history":
+        return <HistoryScreen />;
+      case "search":
+        return <SearchScreen />;
+      default:
+        return (
+          <LiveScreen 
+            liveResult={liveData?.live} 
+            todayResults={todayResults?.result || liveData?.result} 
+            isLoading={isLiveLoading || isResultsLoading}
+            error={liveError}
+          />
+        );
     }
   };
-
-  useEffect(() => {
-    fetchLiveData();
-    const interval = setInterval(fetchLiveData, 30 * 60 * 1000); // 30 minutes
-    return () => clearInterval(interval);
-  }, []);
-
-  const formatTime = (timeString: string) => {
-    if (!timeString) return "";
-    return timeString.split('T')[1]?.split('.')[0] || timeString;
-  };
-
-  const renderLiveScreen = () => (
-    <div className="p-4 space-y-4">
-      {/* Live Result Card */}
-      <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Live Result</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={fetchLiveData}
-              disabled={isLoading}
-              className="text-white hover:bg-white/20"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-          
-          {liveResult ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-blue-100 text-sm">Set</p>
-                <p className="text-2xl font-bold">{liveResult.set}</p>
-              </div>
-              <div>
-                <p className="text-blue-100 text-sm">Value</p>
-                <p className="text-2xl font-bold">{liveResult.value}</p>
-              </div>
-              <div>
-                <p className="text-blue-100 text-sm">2D Number</p>
-                <p className="text-3xl font-bold text-yellow-300">{liveResult.twod}</p>
-              </div>
-              <div>
-                <p className="text-blue-100 text-sm">Time</p>
-                <p className="text-lg">{formatTime(liveResult.time)}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-blue-100">Loading live results...</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Today's Results */}
-      <Card>
-        <CardContent className="p-4">
-          <h3 className="font-semibold mb-3 flex items-center">
-            <Clock className="h-4 w-4 mr-2" />
-            Today's Results
-          </h3>
-          
-          {todayResults.length > 0 ? (
-            <div className="space-y-2">
-              {todayResults.map((result, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <Badge variant="outline" className="mb-1">
-                      {result.open_time}
-                    </Badge>
-                    <p className="text-sm text-gray-600">Set: {result.set}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-blue-600">{result.twod}</p>
-                    <p className="text-xs text-gray-500">Value: {result.value}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">No results available</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {lastUpdate && (
-        <p className="text-xs text-gray-500 text-center">
-          Last updated: {lastUpdate.toLocaleTimeString()}
-        </p>
-      )}
-    </div>
-  );
 
   const renderHistoryScreen = () => (
     <div className="p-4">

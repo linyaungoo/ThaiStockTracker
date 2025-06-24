@@ -28,13 +28,13 @@ export interface HistoryData {
 
 export const lotteryApi = {
   // Fetch live results
-  async getLiveResults(): Promise<LiveResult> {
+  async getLiveResults(): Promise<any> {
     const response = await apiRequest("GET", "/api/lottery/live");
     return response.json();
   },
 
   // Fetch today's results
-  async getTodayResults(): Promise<TodayResult[]> {
+  async getTodayResults(): Promise<any> {
     const response = await apiRequest("GET", "/api/lottery/results");
     return response.json();
   },
