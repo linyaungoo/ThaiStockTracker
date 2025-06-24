@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import LiveScreen from "../components/live-screen";
 import HistoryScreen from "../components/history-screen";
+import DateHistoryScreen from "../components/date-history-screen";
 import SearchScreen from "../components/search-screen";
 import BottomNavigation from "../components/bottom-navigation";
 import { lotteryApi } from "../lib/lottery-api";
 
-type Screen = "live" | "history" | "search";
+type Screen = "live" | "history" | "date-history" | "search";
 
 export default function ThaiLotteryApp() {
   const [activeScreen, setActiveScreen] = useState<Screen>("live");
@@ -37,7 +38,7 @@ export default function ThaiLotteryApp() {
           />
         );
       case "history":
-        return <HistoryScreen />;
+        return <DateHistoryScreen />;
       case "search":
         return <SearchScreen />;
       default:
