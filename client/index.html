@@ -96,7 +96,15 @@
       async function fetchLotteryData() {
         updateStatus('Fetching latest lottery data...');
         try {
-          const response = await fetch('/api/lottery/live');
+          const apiUrl = window.location.origin + '/api/lottery/live';
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          });
+          
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
@@ -133,17 +141,21 @@
           
         } catch (error) {
           console.error('Failed to fetch lottery data:', error);
-          updateStatus('Failed to fetch data. Please try again.');
+          
+          updateStatus('API connection failed - please check network');
+          // Retry after 5 seconds
+          setTimeout(fetchLotteryData, 5000);
         }
       }
       
-      // Initial fetch
-      fetchLotteryData();
-      
-      // Auto-refresh every 30 minutes
-      setInterval(fetchLotteryData, 30 * 60 * 1000);
+      // Wait for page load then fetch
+      window.addEventListener('DOMContentLoaded', function() {
+        fetchLotteryData();
+        // Auto-refresh every 30 minutes
+        setInterval(fetchLotteryData, 30 * 60 * 1000);
+      });
     </script>
     
-    <!-- React app will mount here if successful -->
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
