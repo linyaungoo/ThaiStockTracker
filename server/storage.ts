@@ -9,6 +9,8 @@ import {
   type NumberStats,
   type InsertNumberStats
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Lottery Results
@@ -130,4 +132,96 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async createLotteryResult(insertResult: InsertLotteryResult): Promise<LotteryResult> {
+    const [result] = await db
+      .insert(lotteryResults)
+      .values(insertResult)
+      .returning();
+    return result;
+  }
+
+  async getLotteryResultsByDate(date: string): Promise<LotteryResult[]> {
+    return await db
+      .select()
+      .from(lotteryResults)
+      .where(eq(lotteryResults.date, date));
+  }
+
+  async getLatestLotteryResult(): Promise<LotteryResult | undefined> {
+    const [result] = await db
+      .select()
+      .from(lotteryResults)
+      .orderBy(desc(lotteryResults.id))
+      .limit(1);
+    return result || undefined;
+  }
+
+  async createLotteryHistory(insertHistory: InsertLotteryHistory): Promise<LotteryHistory> {
+    const [history] = await db
+      .insert(lotteryHistory)
+      .values(insertHistory)
+      .returning();
+    return history;
+  }
+
+  async getLotteryHistoryByDate(date: string): Promise<LotteryHistory | undefined> {
+    const [history] = await db
+      .select()
+      .from(lotteryHistory)
+      .where(eq(lotteryHistory.date, date));
+    return history || undefined;
+  }
+
+  async getRecentLotteryHistory(days: number): Promise<LotteryHistory[]> {
+    return await db
+      .select()
+      .from(lotteryHistory)
+      .orderBy(desc(lotteryHistory.date))
+      .limit(days);
+  }
+
+  async updateNumberStats(insertStats: InsertNumberStats): Promise<NumberStats> {
+    const [existing] = await db
+      .select()
+      .from(numberStats)
+      .where(eq(numberStats.number, insertStats.number!));
+
+    if (existing) {
+      const [updated] = await db
+        .update(numberStats)
+        .set(insertStats)
+        .where(eq(numberStats.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(numberStats)
+        .values(insertStats)
+        .returning();
+      return created;
+    }
+  }
+
+  async getNumberStats(number: string): Promise<NumberStats | undefined> {
+    const [stats] = await db
+      .select()
+      .from(numberStats)
+      .where(eq(numberStats.number, number));
+    return stats || undefined;
+  }
+
+  async getAllNumberStats(): Promise<NumberStats[]> {
+    return await db.select().from(numberStats);
+  }
+
+  async getMostFrequentNumbers(limit: number): Promise<NumberStats[]> {
+    return await db
+      .select()
+      .from(numberStats)
+      .orderBy(desc(numberStats.occurrences))
+      .limit(limit);
+  }
+}
+
+export const storage = new DatabaseStorage();

@@ -6,8 +6,9 @@ Thai2Dapp is a Progressive Web App that displays live Thai lottery results with 
 ## Project Architecture
 - **Frontend**: React with TypeScript, Tailwind CSS
 - **Backend**: Express.js with TypeScript
+- **Database**: PostgreSQL with Drizzle ORM
 - **Data Source**: Official Thai Lottery API (api.thaistock2d.com)
-- **Storage**: In-memory storage with caching
+- **Storage**: Database storage with Drizzle ORM
 - **Deployment**: Replit with Vite development server
 
 ## Current Status
@@ -23,10 +24,10 @@ Thai2Dapp is a Progressive Web App that displays live Thai lottery results with 
 - **Fallback**: In-memory cache when API unavailable
 
 ## Recent Changes
-- **2025-06-24**: Fixed all WebSocket configuration conflicts for production
-- **2025-06-24**: Resolved frontend-backend communication issues with CORS
-- **2025-06-24**: Built working React app with authentic Thai lottery API data
-- **2025-06-24**: Removed all API connections per user request - UI only version
+- **2025-06-24**: Added PostgreSQL database with Drizzle ORM integration
+- **2025-06-24**: Replaced in-memory storage with database storage for production
+- **2025-06-24**: Created database schema for lottery results, history, and statistics
+- **2025-06-24**: Fixed preview rendering issues with simplified React component
 
 ## User Preferences
 - UI-only version without any API connections
